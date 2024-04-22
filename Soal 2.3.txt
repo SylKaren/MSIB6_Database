@@ -69,7 +69,7 @@ MariaDB [dbpos_sib6]> SELECT * FROM pelanggan WHERE tmp_lahir NOT LIKE 'Jakarta'
 Empty set (0.000 sec)
 
 6.	Tampilkan pelanggan yang karakter huruf ke – 2 nya adalah A!
-MariaDB [dbpos_sib6]> SELECT * FROM pelanggan WHERE SUBSTRING(nama, 2, 1) = 'A';
+MariaDB [dbpos_sib6]> SELECT *FROM pelanggan WHERE nama LIKE '_A%';
 +----+------+--------------+----+------------+------------+------------------+----------+
 | id | kode | nama         | jk | tmp_lahir  | tgl_lahir  | email            | kartu_id |
 +----+------+--------------+----+------------+------------+------------------+----------+
