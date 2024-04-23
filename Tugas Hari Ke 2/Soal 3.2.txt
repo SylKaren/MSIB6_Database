@@ -1,0 +1,77 @@
+1.	Berapa jumlah pelanggan yang tahun lahirnya 1998!
+MariaDB [dbpos_sib6]> SELECT COUNT(*)
+    -> FROM pelanggan
+    -> WHERE YEAR(tgl_lahir) = 1998;
++----------+
+| COUNT(*) |
++----------+
+|        0 |
++----------+
+1 row in set (0.000 sec)
+
+2.	Berapa jumlah pelanggan perempuan yang tempat lahirnya di Jakarta!
+MariaDB [dbpos_sib6]> SELECT COUNT(*)
+    -> FROM pelanggan
+    -> WHERE jk = 'p' AND tmp_lahir = 'jakarta';
++----------+
+| COUNT(*) |
++----------+
+|        3 |
++----------+
+1 row in set (0.001 sec)
+
+3.	Berapa jumlah total stok semua produk yang harga jualnya dibawah 10rb!
+MariaDB [dbpos_sib6]> SELECT SUM(stok) as total_stok from produk WHERE harga_jual < 10000;
++------------+
+| total_stok |
++------------+
+|         79 |
++------------+
+1 row in set (0.000 sec)
+
+4.	Ada berapa produk yang mempunyai kode awal K!
+MariaDB [dbpos_sib6]> SELECT COUNT(kode)
+    -> FROM produk
+    -> WHERE kode LIKE 'K%';
++-------------+
+| COUNT(kode) |
++-------------+
+|           1 |
++-------------+
+1 row in set (0.000 sec)
+
+5.	Berapa harga jual rata-rata produk yang diatas 1jt!
+MariaDB [dbpos_sib6]> SELECT AVG(harga_jual) AS harga_rata2 from produk WHERE harga_jual > 1000000;
++--------------------+
+| harga_rata2        |
++--------------------+
+| 31387733.333333332 |
++--------------------+
+1 row in set (0.000 sec)
+
+6.	Tampilkan jumlah stok yang paling besar!
+MariaDB [dbpos_sib6]> SELECT MAX(stok) AS stok_terbesar from produk;
++---------------+
+| stok_terbesar |
++---------------+
+|            53 |
++---------------+
+1 row in set (0.000 sec)
+
+7.	Ada berapa produk yang stoknya kurang dari minimal stok!
+MariaDB [dbpos_sib6]> SELECT SUM(stok < min_stok) AS kurang_stok from produk;
++-------------+
+| kurang_stok |
++-------------+
+|           4 |
++-------------+
+1 row in set (0.000 sec)
+
+8.	Berapa total asset dari keseluruhan produk!
+MariaDB [dbpos_sib6]> SELECT SUM(harga_beli * stok) as total from produk;
++-----------+
+| total     |
++-----------+
+| 480504000 |
++-----------+
+1 row in set (0.000 sec)
