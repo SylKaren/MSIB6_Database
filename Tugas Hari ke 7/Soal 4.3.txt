@@ -158,6 +158,8 @@ MariaDB [dbpos_sib6]> SELECT * from kartu;
 +----+------+---------------+--------+--------+
 5 rows in set (0.000 sec)
 
+MariaDB [dbpos_sib6]> COMMIT;
+
 2.	Berikan penjelasan kapan saat yang tepat menggunakan LOCK TABLES READ!
 Kapan saat yang tepat untuk menggunakan LOCK TABLES READ tergantung pada kebutuhan dan konteks pengembangan aplikasi. Berikut adalah beberapa situasi di mana penggunaan LOCK TABLES READ dapat dianggap tepat:
 
