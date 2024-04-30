@@ -1,0 +1,165 @@
+1.	Buatlah Procedure untuk mengupdate harga_jual berdasarkan jenis produk tertentu (jenis_produk_id), beri nama procedure pro_naikan_harga memiliki parameter yang akan menerima argumen: Jenis Produk ID dan Persentase kenaikan harga.
+MariaDB [dbpos_sib6]> SELECT nama, stok, harga_jual, jenis_produk_id FROM produk;
++-------------------+------+------------+-----------------+
+| nama              | stok | harga_jual | jenis_produk_id |
++-------------------+------+------------+-----------------+
+| Televisi 21 inchs |    5 |   52520000 |               1 |
+| Televisi 40 inch  |    4 |    7737600 |               1 |
+| Kulkas 2 pintu    |    6 |    4867200 |               1 |
+| Meja Makan        |    4 |     600000 |               2 |
+| Teh Kotak         |    6 |       3850 |               4 |
+| PC Desktop HP     |    9 |    9984000 |               5 |
+| Teh Botol         |   53 |       2750 |               4 |
+| Notebook Acer S   |    7 |   11232000 |               5 |
+| Notebook Lenovo   |    9 |   12480000 |               5 |
+| Laptop Lenovo     |    5 |   16640000 |               1 |
+| Kopi              |   10 |      33000 |               4 |
+| Teh Sosro 2       |   10 |      15600 |               1 |
+| Laptop Asus       |   10 |    5200000 |               1 |
+| Televisi 22 inc`  |    5 |   52520000 |               1 |
+| Televisi 23 inc   |    5 |   52520000 |               1 |
+| Televisi 24 inc   |    5 |   52520000 |               1 |
+| Televisi 25 inc   |    5 |   52520000 |               1 |
+| Televisi 27 inc   |    5 |   52520000 |               1 |
+| Televisi 28 inc   |    5 |   52520000 |               1 |
+| Televisi 29 inc   |    5 |   52520000 |               1 |
+| Teh Pucuk         |   10 |       5500 |               4 |
+| Teh Pucuk2        |   10 |       5500 |               4 |
+| Sushi             |   20 |      46800 |               1 |
+| Takoyaki          |   10 |      35000 |               2 |
+| Macha             |   15 |      30000 |               3 |
++-------------------+------+------------+-----------------+
+25 rows in set (0.000 sec)
+MariaDB [dbpos_sib6]> DELIMITER $$
+MariaDB [dbpos_sib6]> CREATE PROCEDURE pro_naikan_harga(
+    -> IN jenis_produk INT,
+    -> IN persentasi_kenaikan INT )
+    -> BEGIN
+    -> UPDATE produk SET harga_jual = harga_jual + (harga_jual * persentasi_kenaikan / 100)
+    -> WHERE jenis_produk_id = jenis_produk;
+    -> END $$
+Query OK, 0 rows affected (0.005 sec)
+
+MariaDB [dbpos_sib6]> DELIMITER ;
+
+Disini saya akan mencoba menaikan harga untuk jenis produk id 5 dengan persentase kenaikan 10%
+MariaDB [dbpos_sib6]> CALL pro_naikan_harga(5,10);
+Query OK, 3 rows affected (0.002 sec)
+MariaDB [dbpos_sib6]> SELECT nama, stok, harga_jual, jenis_produk_id FROM produk;
++-------------------+------+------------+-----------------+
+| nama              | stok | harga_jual | jenis_produk_id |
++-------------------+------+------------+-----------------+
+| Televisi 21 inchs |    5 |   52520000 |               1 |
+| Televisi 40 inch  |    4 |    7737600 |               1 |
+| Kulkas 2 pintu    |    6 |    4867200 |               1 |
+| Meja Makan        |    4 |     600000 |               2 |
+| Teh Kotak         |    6 |       3850 |               4 |
+| PC Desktop HP     |    9 |   10982400 |               5 |
+| Teh Botol         |   53 |       2750 |               4 |
+| Notebook Acer S   |    7 |   12355200 |               5 |
+| Notebook Lenovo   |    9 |   13728000 |               5 |
+| Laptop Lenovo     |    5 |   16640000 |               1 |
+| Kopi              |   10 |      33000 |               4 |
+| Teh Sosro 2       |   10 |      15600 |               1 |
+| Laptop Asus       |   10 |    5200000 |               1 |
+| Televisi 22 inc`  |    5 |   52520000 |               1 |
+| Televisi 23 inc   |    5 |   52520000 |               1 |
+| Televisi 24 inc   |    5 |   52520000 |               1 |
+| Televisi 25 inc   |    5 |   52520000 |               1 |
+| Televisi 27 inc   |    5 |   52520000 |               1 |
+| Televisi 28 inc   |    5 |   52520000 |               1 |
+| Televisi 29 inc   |    5 |   52520000 |               1 |
+| Teh Pucuk         |   10 |       5500 |               4 |
+| Teh Pucuk2        |   10 |       5500 |               4 |
+| Sushi             |   20 |      46800 |               1 |
+| Takoyaki          |   10 |      35000 |               2 |
+| Macha             |   15 |      30000 |               3 |
++-------------------+------+------------+-----------------+
+25 rows in set (0.000 sec)
+
+2.	Buat fungsi umur dengan parameter yang menerima inputan argumen tipe data date dan mengembalikan hasil perhitungan umur (tahun sekarang dikurang tahun inputan) dengan tipe data bilangan bulat (integer) positif.
+MariaDB [dbpos_sib6]> DELIMITER $$
+MariaDB [dbpos_sib6]> CREATE FUNCTION umur(tgl_lahir DATE)
+    -> RETURNS INT
+    -> BEGIN
+    -> DECLARE umur INT;
+    -> SET umur = YEAR(CURDATE()) - YEAR(tgl_lahir);
+    -> RETURN umur;
+    -> END $$
+Query OK, 0 rows affected (0.005 sec)
+
+MariaDB [dbpos_sib6]> DELIMITER ;
+MariaDB [dbpos_sib6]> SELECT nama, umur(tgl_lahir) AS umur FROM pelanggan;
++--------------------+------+
+| nama               | umur |
++--------------------+------+
+| Agung Sedayu Group |   14 |
+| Pandan Wangi       |   74 |
+| Sekar Mirah        |   41 |
+| Swandaru Geni      |   43 |
+| Pradabashu         |   39 |
+| Gayatri Dwi        |   37 |
+| Dewi Gyat          |   36 |
+| Andre Haru         |   34 |
+| Ahmad Hasan        |   32 |
+| Cassanndra         |   34 |
+| Andi Wijaya        |    1 |
+| Ira                |    1 |
++--------------------+------+
+12 rows in set (0.004 sec)
+
+3.	Buat fungsi kategori_harga dengan parameter yang menerima inputan argument tipe data double dan mengembalikan tipe data string kategori harga berdasarkan: 
+●	0 – 500rb : murah
+●	500rb – 3 juta : sedang
+●	3jt – 10 juta : mahal 
+●	> 10 juta : sangat mahal
+
+MariaDB [dbpos_sib6]> DELIMITER $$
+MariaDB [dbpos_sib6]> CREATE FUNCTION kategori_harga(harga_jual DOUBLE)
+    -> RETURNS VARCHAR(50)
+    -> BEGIN
+    -> DECLARE kategori_harga VARCHAR(50);
+    -> IF harga_jual <= 500000 THEN
+    -> SET kategori_harga = 'Murah';
+    -> ELSEIF harga_jual <= 3000000 THEN
+    -> SET kategori_harga = 'Sedang';
+    -> ELSEIF harga_jual <= 10000000 THEN
+    -> SET kategori_harga = 'Mahal';
+    -> ELSE SET kategori_harga = 'Sangat Mahal';
+    -> END IF;
+    -> RETURN kategori_harga;
+    -> END $$
+Query OK, 0 rows affected (0.005 sec)
+
+MariaDB [dbpos_sib6]> DELIMITER ;
+MariaDB [dbpos_sib6]> SELECT kode, nama, stok, harga_jual, kategori_harga(harga_jual) AS kategori FROM produk;
++--------+-------------------+------+------------+--------------+
+| kode   | nama              | stok | harga_jual | kategori     |
++--------+-------------------+------+------------+--------------+
+| TV01   | Televisi 21 inchs |    5 |   52520000 | Sangat Mahal |
+| TV02   | Televisi 40 inch  |    4 |    7737600 | Mahal        |
+| K001   | Kulkas 2 pintu    |    6 |    4867200 | Mahal        |
+| M001   | Meja Makan        |    4 |     600000 | Sedang       |
+| TK01   | Teh Kotak         |    6 |       3850 | Murah        |
+| PC01   | PC Desktop HP     |    9 |   10982400 | Sangat Mahal |
+| TB01   | Teh Botol         |   53 |       2750 | Murah        |
+| AC01   | Notebook Acer S   |    7 |   12355200 | Sangat Mahal |
+| LN01   | Notebook Lenovo   |    9 |   13728000 | Sangat Mahal |
+| L005   | Laptop Lenovo     |    5 |   16640000 | Sangat Mahal |
+| L112   | Kopi              |   10 |      33000 | Murah        |
+| L113   | Teh Sosro 2       |   10 |      15600 | Murah        |
+| L0015  | Laptop Asus       |   10 |    5200000 | Mahal        |
+| TV0115 | Televisi 22 inc`  |    5 |   52520000 | Sangat Mahal |
+| TV0116 | Televisi 23 inc   |    5 |   52520000 | Sangat Mahal |
+| TV0117 | Televisi 24 inc   |    5 |   52520000 | Sangat Mahal |
+| TV0118 | Televisi 25 inc   |    5 |   52520000 | Sangat Mahal |
+| TV0120 | Televisi 27 inc   |    5 |   52520000 | Sangat Mahal |
+| TV0121 | Televisi 28 inc   |    5 |   52520000 | Sangat Mahal |
+| TV0122 | Televisi 29 inc   |    5 |   52520000 | Sangat Mahal |
+| THP001 | Teh Pucuk         |   10 |       5500 | Murah        |
+| THP002 | Teh Pucuk2        |   10 |       5500 | Murah        |
+| SS001  | Sushi             |   20 |      46800 | Murah        |
+| TK011  | Takoyaki          |   10 |      35000 | Murah        |
+| MC022  | Macha             |   15 |      30000 | Murah        |
++--------+-------------------+------+------------+--------------+
+25 rows in set (0.001 sec)
