@@ -1,0 +1,264 @@
+1.	Buatlah bisnis proses pembayaran dengan menggunakan trigers, dengan skenario sebagai berikut :
+- pelanggan memesan didalam table pesanan 
+- dilanjutkan dengan proses pembayaran di table pembayaran
+- didalam table pembayaran tambahkan kolom status_pembayaran
+- jika pesanan sudah dibayar maka status pembayaran akan berubah menjadi lunas 
+MariaDB [dbpos_sib6]> SELECT * FROM pesanan;
++----+------------+---------+--------------+
+| id | tanggal    | total   | pelanggan_id |
++----+------------+---------+--------------+
+|  1 | 2015-11-04 | 9720000 |            1 |
+|  2 | 2015-11-04 |   17500 |            3 |
+|  3 | 2015-11-04 |       0 |            6 |
+|  4 | 2015-11-04 |       0 |            7 |
+|  5 | 2015-11-04 |       0 |           10 |
+|  6 | 2015-11-04 |       0 |            2 |
+|  7 | 2015-11-04 |       0 |            5 |
+|  8 | 2015-11-04 |       0 |            4 |
+|  9 | 2015-11-04 |       0 |            8 |
+| 10 | 2015-11-04 |       0 |            9 |
+| 11 | 2015-11-04 |   30000 |            9 |
+| 12 | 2020-11-04 |   40000 |            9 |
++----+------------+---------+--------------+
+12 rows in set (0.002 sec)
+MariaDB [dbpos_sib6]> DELIMITER $$
+MariaDB [dbpos_sib6]> CREATE TRIGGER cek_pembayaran1 BEFORE INSERT ON pembayaran
+  -> FOR EACH ROW
+  -> BEGIN
+  -> DECLARE total_bayar DECIMAL(10,2);
+  -> DECLARE total_pesanan DECIMAL(10,2); 
+  -> SELECT SUM(p.jumlah) INTO total_bayar 
+  -> FROM pembayaran p
+  -> JOIN pesanan ps ON p.pesanan_id = ps.id
+  -> WHERE p.pesanan_id = NEW.pesanan_id; 
+  -> SELECT total INTO total_pesanan FROM pesanan WHERE id = NEW.pesanan_id;    
+  -> IF total_bayar + NEW.jumlah >= total_pesanan THEN 
+  -> SET NEW.status_pembayaran = 'Lunas';
+  -> END IF;
+  -> END $$
+Query OK, 0 rows affected (0.005 sec)
+
+MariaDB [dbpos_sib6]> DELIMITER ;
+MariaDB [dbpos_sib6]> SELECT * from pembayaran;
++----+------------+------------+--------+------+------------+-------------------+
+| id | nokuitansi | tanggal    | jumlah | ke   | pesanan_id | status_pembayaran |
++----+------------+------------+--------+------+------------+-------------------+
+|  1 | MD001      | 0000-00-00 |  30000 |    1 |         11 | Lunas             |
+|  2 | MD002      | 2023-10-10 |  30000 |    2 |         11 | Lunas             |
+|  3 | MD003      | 2023-10-10 |  30000 |    1 |         11 | Lunas             |
+|  4 | MD004      | 2023-10-10 |  15000 |    1 |          2 |                   |
+|  5 | MD005      | 2023-10-10 |  18000 |    2 |          2 | Lunas             |
+|  6 | MD1001     | 2024-02-03 |  35000 |    1 |         11 | Lunas             |
++----+------------+------------+--------+------+------------+-------------------+
+6 rows in set (0.000 sec)
+MariaDB [dbpos_sib6]> INSERT INTO pembayaran (nokuitansi, tanggal, jumlah, ke, pesanan_id)
+    -> VALUES ('KWI001', '2023-03-03', 200000, 3, 2);
+Query OK, 1 row affected (0.003 sec)
+
+MariaDB [dbpos_sib6]> SELECT * from pembayaran;
++----+------------+------------+--------+------+------------+-------------------+
+| id | nokuitansi | tanggal    | jumlah | ke   | pesanan_id | status_pembayaran |
++----+------------+------------+--------+------+------------+-------------------+
+|  1 | MD001      | 0000-00-00 |  30000 |    1 |         11 | Lunas             |
+|  2 | MD002      | 2023-10-10 |  30000 |    2 |         11 | Lunas             |
+|  3 | MD003      | 2023-10-10 |  30000 |    1 |         11 | Lunas             |
+|  4 | MD004      | 2023-10-10 |  15000 |    1 |          2 |                   |
+|  5 | MD005      | 2023-10-10 |  18000 |    2 |          2 | Lunas             |
+|  6 | MD1001     | 2024-02-03 |  35000 |    1 |         11 | Lunas             |
+|  8 | KWI001     | 2023-03-03 | 200000 |    3 |          2 | Lunas             |
++----+------------+------------+--------+------+------------+-------------------+
+7 rows in set (0.000 sec)
+
+2.	Buatlah Stored Procedure dengan nama kurangi_stok untuk mengurangi stok produk. Stok berkurang sesuai dengan jumlah pesanan produk.
+MariaDB [dbpos_sib6]> DELIMITER $$
+MariaDB [dbpos_sib6]> CREATE PROCEDURE kurangi_stok(IN produk_id INT,
+    -> IN jumlah_pesanan INT)
+    -> BEGIN
+    -> DECLARE stok_produk INT;
+    -> SELECT stok INTO stok_produk FROM produk WHERE id = produk_id;
+    -> SET stok_produk = stok_produk - jumlah_pesanan;
+    -> IF stok_produk <= 0 THEN
+    -> SIGNAL SQLSTATE '45000'
+    -> SET MESSAGE_TEXT = 'Stok produk tidak cukup';
+    -> END IF;
+    -> UPDATE produk SET stok = stok_produk WHERE id = produk_id;
+    -> END $$
+Query OK, 0 rows affected (0.006 sec)
+
+MariaDB [dbpos_sib6]> DELIMITER ;
+MariaDB [dbpos_sib6]> DELIMITER $$
+MariaDB [dbpos_sib6]> CREATE TRIGGER kurangi_stok AFTER INSERT
+    -> ON pesanan_items
+    -> FOR EACH ROW
+    -> BEGIN
+    -> CALL kurangi_stok(NEW.produk_id, NEW.qty);
+    -> END $$
+Query OK, 0 rows affected (0.007 sec)
+
+MariaDB [dbpos_sib6]> DELIMITER ;
+MariaDB [dbpos_sib6]> SELECT id, nama, stok FROM produk;
++----+-------------------+------+
+| id | nama              | stok |
++----+-------------------+------+
+|  1 | Televisi 21 inchs |    5 |
+|  2 | Televisi 40 inch  |    4 |
+|  3 | Kulkas 2 pintu    |    6 |
+|  4 | Meja Makan        |    4 |
+|  5 | Teh Kotak         |    6 |
+|  6 | PC Desktop HP     |    9 |
+|  7 | Teh Botol         |   53 |
+|  8 | Notebook Acer S   |    7 |
+|  9 | Notebook Lenovo   |    9 |
+| 11 | Laptop Lenovo     |    5 |
+| 15 | Kopi              |   10 |
+| 16 | Teh Sosro 2       |   10 |
+| 18 | Laptop Asus       |   10 |
+| 19 | Televisi 22 inc`  |    5 |
+| 20 | Televisi 23 inc   |    5 |
+| 21 | Televisi 24 inc   |    5 |
+| 22 | Televisi 25 inc   |    5 |
+| 24 | Televisi 27 inc   |    5 |
+| 25 | Televisi 28 inc   |    5 |
+| 26 | Televisi 29 inc   |    5 |
+| 27 | Teh Pucuk         |   10 |
+| 28 | Teh Pucuk2        |   10 |
+| 32 | Sushi             |   20 |
+| 33 | Takoyaki          |   10 |
+| 34 | Macha             |   15 |
++----+-------------------+------+
+25 rows in set (0.000 sec)
+
+MariaDB [dbpos_sib6]> INSERT INTO pesanan_items(produk_id, pesanan_id, qty, harga)
+    -> VALUES (16, 1, 5, 40000);
+Query OK, 1 row affected (0.004 sec)
+
+MariaDB [dbpos_sib6]> SELECT id, nama, stok FROM produk;
++----+-------------------+------+
+| id | nama              | stok |
++----+-------------------+------+
+|  1 | Televisi 21 inchs |    5 |
+|  2 | Televisi 40 inch  |    4 |
+|  3 | Kulkas 2 pintu    |    6 |
+|  4 | Meja Makan        |    4 |
+|  5 | Teh Kotak         |    6 |
+|  6 | PC Desktop HP     |    9 |
+|  7 | Teh Botol         |   53 |
+|  8 | Notebook Acer S   |    7 |
+|  9 | Notebook Lenovo   |    9 |
+| 11 | Laptop Lenovo     |    5 |
+| 15 | Kopi              |   10 |
+| 16 | Teh Sosro 2       |    5 |
+| 18 | Laptop Asus       |   10 |
+| 19 | Televisi 22 inc`  |    5 |
+| 20 | Televisi 23 inc   |    5 |
+| 21 | Televisi 24 inc   |    5 |
+| 22 | Televisi 25 inc   |    5 |
+| 24 | Televisi 27 inc   |    5 |
+| 25 | Televisi 28 inc   |    5 |
+| 26 | Televisi 29 inc   |    5 |
+| 27 | Teh Pucuk         |   10 |
+| 28 | Teh Pucuk2        |   10 |
+| 32 | Sushi             |   20 |
+| 33 | Takoyaki          |   10 |
+| 34 | Macha             |   15 |
++----+-------------------+------+
+25 rows in set (0.000 sec)
+
+3.	Buatlah Trigger dengan nama trig_kurangi_stok yang akan mengurangi stok produk jika terjadi transaksi pesanan oleh pelanggan (memanggil stored procedure kurangi_stok soal no 1).
+Trigger ini aktif setelah trigger after_pesanan_items_insert (trigger pada contoh 3).
+MariaDB [dbpos_sib6]> DELIMITER $$
+MariaDB [dbpos_sib6]> CREATE PROCEDURE trig_kurangi_stok(IN produk_id INT,
+    -> IN jumlah_pesanan INT)
+    -> BEGIN
+    -> DECLARE stok_produk INT;
+    -> SELECT stok INTO stok_produk FROM produk WHERE id = produk_id;
+    -> SET stok_produk = stok_produk - jumlah_pesanan;
+    -> IF stok_produk <= 0 THEN
+    -> SIGNAL SQLSTATE '45000'
+    -> SET MESSAGE_TEXT = 'Stok produk tidak cukup';
+    -> END IF;
+    -> UPDATE produk SET stok = stok_produk WHERE id = produk_id;
+    -> END $$
+Query OK, 0 rows affected (0.006 sec)
+
+MariaDB [dbpos_sib6]> DELIMITER ;
+MariaDB [dbpos_sib6]> DELIMITER $$
+MariaDB [dbpos_sib6]> CREATE TRIGGER kurangi_stok AFTER INSERT
+    -> ON pesanan_items
+    -> FOR EACH ROW
+    -> BEGIN
+    -> CALL kurangi_stok(NEW.produk_id, NEW.qty);
+    -> END $$
+Query OK, 0 rows affected (0.007 sec)
+
+MariaDB [dbpos_sib6]> DELIMITER ;
+MariaDB [dbpos_sib6]> SELECT id, nama, stok FROM produk;
++----+-------------------+------+
+| id | nama              | stok |
++----+-------------------+------+
+|  1 | Televisi 21 inchs |    5 |
+|  2 | Televisi 40 inch  |    4 |
+|  3 | Kulkas 2 pintu    |    6 |
+|  4 | Meja Makan        |    4 |
+|  5 | Teh Kotak         |    6 |
+|  6 | PC Desktop HP     |    9 |
+|  7 | Teh Botol         |   53 |
+|  8 | Notebook Acer S   |    7 |
+|  9 | Notebook Lenovo   |    9 |
+| 11 | Laptop Lenovo     |    5 |
+| 15 | Kopi              |   10 |
+| 16 | Teh Sosro 2       |   10 |
+| 18 | Laptop Asus       |   10 |
+| 19 | Televisi 22 inc`  |    5 |
+| 20 | Televisi 23 inc   |    5 |
+| 21 | Televisi 24 inc   |    5 |
+| 22 | Televisi 25 inc   |    5 |
+| 24 | Televisi 27 inc   |    5 |
+| 25 | Televisi 28 inc   |    5 |
+| 26 | Televisi 29 inc   |    5 |
+| 27 | Teh Pucuk         |   10 |
+| 28 | Teh Pucuk2        |   10 |
+| 32 | Sushi             |   20 |
+| 33 | Takoyaki          |   10 |
+| 34 | Macha             |   15 |
++----+-------------------+------+
+25 rows in set (0.000 sec)
+
+Disini saya akan mengurangi stok produk yang ber-id 7 dan pesanan id 3 dengan pengurangan 2 stok yang dihargai 7000.
+
+MariaDB [dbpos_sib6]> INSERT INTO pesanan_items(produk_id, pesanan_id, qty, harga)
+    -> VALUES
+    -> (7, 3, 2, 7000);
+Query OK, 1 row affected (0.003 sec)
+
+MariaDB [dbpos_sib6]> SELECT id, nama, stok FROM produk;
++----+-------------------+------+
+| id | nama              | stok |
++----+-------------------+------+
+|  1 | Televisi 21 inchs |    5 |
+|  2 | Televisi 40 inch  |    4 |
+|  3 | Kulkas 2 pintu    |    6 |
+|  4 | Meja Makan        |    4 |
+|  5 | Teh Kotak         |    6 |
+|  6 | PC Desktop HP     |    9 |
+|  7 | Teh Botol         |   51 |
+|  8 | Notebook Acer S   |    7 |
+|  9 | Notebook Lenovo   |    9 |
+| 11 | Laptop Lenovo     |    5 |
+| 15 | Kopi              |   10 |
+| 16 | Teh Sosro 2       |    5 |
+| 18 | Laptop Asus       |   10 |
+| 19 | Televisi 22 inc`  |    5 |
+| 20 | Televisi 23 inc   |    5 |
+| 21 | Televisi 24 inc   |    5 |
+| 22 | Televisi 25 inc   |    5 |
+| 24 | Televisi 27 inc   |    5 |
+| 25 | Televisi 28 inc   |    5 |
+| 26 | Televisi 29 inc   |    5 |
+| 27 | Teh Pucuk         |   10 |
+| 28 | Teh Pucuk2        |   10 |
+| 32 | Sushi             |   20 |
+| 33 | Takoyaki          |   10 |
+| 34 | Macha             |   15 |
++----+-------------------+------+
+25 rows in set (0.000 sec)
